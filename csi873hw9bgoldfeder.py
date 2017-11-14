@@ -113,11 +113,21 @@ def driver(dpath,trnNum,tstNum):
     answerTest = my_test[:,0]    
     
     # Run the KNN algorithm
-    k=1
+    tstAccList = []
+    k=7
     for i in range(tstNum):
         result = predictKNN(just_test_data[i],just_trn_data,answerTrn,k)
-        
-        print('KNN is ',result,' answer is ',answerTest[i])
+        #print('KNN is ',result,' answer is ',answerTest[i])
+        if (result - answerTest[i] == 0):
+            tstAccList.append(1)
+        else:
+            tstAccList.append(0)
+    
+    # Output the Test set accuracy
+    right = sum(tstAccList)
+    total = len(tstAccList)
+    testAccuracy = right/total
+    print('Final Test results of ',right,' out of ',total,' accuracy is ',testAccuracy)
 
 if __name__ == "__main__":
     
@@ -132,7 +142,7 @@ if __name__ == "__main__":
     
     if not options.filepath :
         print("Used default of data" )
-        filepath = os.getcwd()+'\data3'
+        filepath = os.getcwd()+'\data'
     else: filepath = options.filepath
     
     if not options.trnNum :
