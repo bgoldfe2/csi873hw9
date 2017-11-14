@@ -8,6 +8,7 @@ Created on Mon Nov 13 22:27:25 2017
             HW #9 - KNN
 """
 
+import os
 import numpy as np
 import operator
 
@@ -56,7 +57,8 @@ def predictKNN(testData, trainData, answerData, k):
     # first time through the weight is 1
     # epsilon is always 1
     epsilon = 1
-    wiList = weight(sqDistances,epsilon)
+    flag = True
+    wiList = weight(sqDistances,epsilon,flag)
     weightedDist = np.multiply(wiList,distances)
     
     # I am multiplying after finding the distances
@@ -65,7 +67,7 @@ def predictKNN(testData, trainData, answerData, k):
     for i in range(k):
         voteIlabel = answerData[sortedDists[i]]
         classCount[voteIlabel] = classCount.get(voteIlabel,0) + 1
-    sortedClassCount = sorted(classCount.iteritems(), key=operator.itemgetter(1), reverse=True)
+    sortedClassCount = sorted(classCount.items(), key=operator.itemgetter(1), reverse=True)
     return sortedClassCount[0][0]
 
 def weight(sqDistances,epsilon,flag):
@@ -109,6 +111,13 @@ def driver(dpath,trnNum,tstNum):
     
     just_test_data = my_test[:,1:]
     answerTest = my_test[:,0]    
+    
+    # Run the KNN algorithm
+    k=1
+    for i in range(tstNum):
+        result = predictKNN(just_test_data[i],just_trn_data,answerTrn,k)
+        
+        print('KNN is ',result,' answer is ',answerTest[i])
 
 if __name__ == "__main__":
     
@@ -123,18 +132,18 @@ if __name__ == "__main__":
     
     if not options.filepath :
         print("Used default of data" )
-        filepath = os.getcwd()+'\data'
+        filepath = os.getcwd()+'\data3'
     else: filepath = options.filepath
     
     if not options.trnNum :
-        print("Used default trnNum = 1000" )
-        trnNum = 4500
+        print("Used default trnNum = 50" )
+        trnNum = 50
     else: trnNum = int(options.trnNum)
     
     if not options.tstNum :
-        print("Used default tstNum = 500" )
-        tstNum = 890
+        print("Used default tstNum = 50" )
+        tstNum = 50
     else: tstNum = int(options.tstNum) 
     
     # Call the driver function for KNN
-    driver()
+    driver(filepath,trnNum,tstNum)
