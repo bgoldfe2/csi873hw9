@@ -43,6 +43,12 @@ def ReadInOneList(fullData,maxRows):
             allData.append(fullData[j][k])
     return np.asarray(allData)
 
+def MakeBinary(my_data):
+    # This module converts the 0-255 to 0 or 1 binomial
+    my_data[my_data > 0] = 1
+    
+    return my_data
+
 # Takes the x_q input to be tested, the training data array, the answer array,
 # and the value for k
 def predictKNN(testData, trainData, answerData, k):
@@ -56,31 +62,31 @@ def predictKNN(testData, trainData, answerData, k):
     # Then find the weight
     # first time through the weight is 1
     # epsilon is always 1
-    epsilon = 1
-    flag = True
-    wiList = weight(sqDistances,epsilon,flag)
-    weightedDist = np.multiply(wiList,distances)
+    
+    flag = False
+    #wiList = weight(sqDistances,epsilon,flag)
+    #weightedDist = np.multiply(wiList,distances)
     
     # I am multiplying after finding the distances
-    sortedDists = weightedDist.argsort()     
+    sortedDists = distances.argsort()     
     classCount={}          
     for i in range(k):
         voteIlabel = answerData[sortedDists[i]]
-        classCount[voteIlabel] = classCount.get(voteIlabel,0) + 1
+        classCount[voteIlabel] = classCount.get(voteIlabel,0) + weight(distances[sortedDists[i]],flag)
     sortedClassCount = sorted(classCount.items(), key=operator.itemgetter(1), reverse=True)
     return sortedClassCount[0][0]
 
-def weight(sqDistances,epsilon,flag):
-
+def weight(k2weight,flag):
+    epsilon = 1.0
     # returns the weight array based on flag true means weight = 1
     # false = calculate the weight
     if flag:
-        numDist = sqDistances.shape
-        weightList = np.ones(numDist)
+        weightAmt = 1
     else:
-        weightList = np.divide(1,np.add(sqDistances,epsilon))
+        denom = k2weight**2 + epsilon
+        weightAmt = 1 / denom
     
-    return weightList
+    return weightAmt
 
 def driver(dpath,trnNum,tstNum):
     
@@ -89,13 +95,14 @@ def driver(dpath,trnNum,tstNum):
     my_data = ReadInOneList(datasetTrn,trnNum)
     
     # Convert the 0-255 to 0 through 1 values in data
-    my_data[:,1:] /= 255.0
-    #HeatMap(my_data[40,1:])
+    #my_data[:,1:] /= 255.0
+    
     
     # randomize the rows for better training
-    np.random.shuffle(my_data)
+    #np.random.shuffle(my_data)
     inNum,cols = my_data.shape    
     just_trn_data = my_data[:,1:]
+    just_trn_data_bin = MakeBinary(just_trn_data)
     answerTrn = my_data[:,0]
     
     # Read in the test data
@@ -110,13 +117,14 @@ def driver(dpath,trnNum,tstNum):
     my_test[:,1:] /= 255.0
     
     just_test_data = my_test[:,1:]
+    just_test_data_bin = MakeBinary(just_test_data)
     answerTest = my_test[:,0]    
     
     # Run the KNN algorithm
     tstAccList = []
     k=7
     for i in range(tstNum):
-        result = predictKNN(just_test_data[i],just_trn_data,answerTrn,k)
+        result = predictKNN(just_test_data_bin[i],just_trn_data_bin,answerTrn,k)
         #print('KNN is ',result,' answer is ',answerTest[i])
         if (result - answerTest[i] == 0):
             tstAccList.append(1)
@@ -142,7 +150,7 @@ if __name__ == "__main__":
     
     if not options.filepath :
         print("Used default of data" )
-        filepath = os.getcwd()+'\data'
+        filepath = os.getcwd()+'\data3'
     else: filepath = options.filepath
     
     if not options.trnNum :
