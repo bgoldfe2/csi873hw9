@@ -51,7 +51,7 @@ def MakeBinary(my_data):
 
 # Takes the x_q input to be tested, the training data array, the answer array,
 # and the value for k
-def predictKNN(testData, trainData, answerData, k):
+def predictKNN(testData, trainData, answerData, k, flag):
     # First find the Euclidean Distance 
     dataSetSize = trainData.shape[0]
     diffMat = np.tile(testData, (dataSetSize,1)) - trainData
@@ -59,15 +59,6 @@ def predictKNN(testData, trainData, answerData, k):
     sqDistances = sqDiffMat.sum(axis=1)
     distances = sqDistances**0.5
     
-    # Then find the weight
-    # first time through the weight is 1
-    # epsilon is always 1
-    
-    flag = False
-    #wiList = weight(sqDistances,epsilon,flag)
-    #weightedDist = np.multiply(wiList,distances)
-    
-    # I am multiplying after finding the distances
     sortedDists = distances.argsort()     
     classCount={}          
     for i in range(k):
@@ -121,21 +112,37 @@ def driver(dpath,trnNum,tstNum):
     answerTest = my_test[:,0]    
     
     # Run the KNN algorithm
-    tstAccList = []
-    k=7
-    for i in range(tstNum):
-        result = predictKNN(just_test_data_bin[i],just_trn_data_bin,answerTrn,k)
-        #print('KNN is ',result,' answer is ',answerTest[i])
-        if (result - answerTest[i] == 0):
-            tstAccList.append(1)
-        else:
-            tstAccList.append(0)
     
-    # Output the Test set accuracy
-    right = sum(tstAccList)
-    total = len(tstAccList)
-    testAccuracy = right/total
-    print('Final Test results of ',right,' out of ',total,' accuracy is ',testAccuracy)
+    
+    for trial in range(1,4):
+        kAccList = []
+        for k in range(1,8):
+            tstAccList = []
+            if trial == 1:
+                flag = True
+            elif trial == 2:
+                flag = False
+            elif trial == 3:
+                flag = False
+                k= trnNum * 10  # for the ten digits
+            for i in range(tstNum):
+                result = predictKNN(just_test_data_bin[i],just_trn_data_bin,answerTrn,k,flag)
+                #print('KNN is ',result,' answer is ',answerTest[i])
+                if (result - answerTest[i] == 0):
+                    tstAccList.append(1)
+                else:
+                    tstAccList.append(0)
+            
+            # Output the Test set accuracy
+            right = sum(tstAccList)
+            total = len(tstAccList)
+            testAccuracy = right/total
+            kAccList.append(testAccuracy)
+            print('Trial ',trial, ' k = ',k,'; ',right,' out of ',total,' accuracy is ',testAccuracy)
+            tstAccList[:]=[]
+            if trial == 3:
+                break
+        print(kAccList)
 
 if __name__ == "__main__":
     
@@ -150,7 +157,7 @@ if __name__ == "__main__":
     
     if not options.filepath :
         print("Used default of data" )
-        filepath = os.getcwd()+'\data3'
+        filepath = os.getcwd()+'\data'
     else: filepath = options.filepath
     
     if not options.trnNum :
